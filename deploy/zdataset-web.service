@@ -1,0 +1,14 @@
+[Unit]
+Description=ZDataset Web data management platform
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Zdataset-web
+ExecStart=%h/Zdataset-web/run.sh
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

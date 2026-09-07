@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ZDataset · 数据管理</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand" aria-label="ZDataset Web">
+      <span class="brand-mark">Z</span>
+      <span><strong>ZDataset</strong><small>LOCAL DATA PLATFORM</small></span>
+    </div>
+    <div class="root-control">
+      <label for="rootSelect">数据目录</label>
+      <select id="rootSelect" aria-label="Capture 数据目录"><option value="all">全部目录</option></select>
+    </div>
+    <div class="service-state"><span class="state-dot" id="serviceDot"></span><span id="serviceLabel">正在连接</span><b>LOCAL</b></div>
+  </header>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="平台模块">
+      <nav>
+        <button class="nav-item active" data-view="overview"><span>01</span>数据概览</button>
+        <button class="nav-item" data-view="captures"><span>02</span>Capture 目录</button>
+        <button class="nav-item" data-view="runs"><span>03</span>处理作业</button>
+        <button class="nav-item" data-view="quality"><span>04</span>质量中心</button>
+        <button class="nav-item" data-view="exports"><span>05</span>数据导出</button>
+      </nav>
+      <div class="side-foot">
+        <span>执行器</span><strong>LOCAL</strong>
+        <small>v0.1.0</small>
+      </div>
+    </aside>
+
+    <main>
+      <section class="view active" id="view-overview">
+        <div class="page-head">
+          <div><span class="eyebrow">DATA OPERATIONS</span><h1>数据概览</h1></div>
+          <div class="page-actions"><span id="lastScan">尚未扫描</span><button class="button" id="scanButton" type="button">重新扫描</button></div>
+        </div>
+
+        <div class="summary-grid" aria-label="数据摘要">
+          <div><span>CAPTURES</span><strong id="metricTotal">--</strong><small>当前目录</small></div>
+          <div><span>PROCESSING</span><strong id="metricProcessing">--</strong><small>处理中</small></div>
+          <div><span>FAILED</span><strong id="metricFailed">--</strong><small>需要处理</small></div>
+          <div><span>INDEXED SIZE</span><strong id="metricSize">--</strong><small>来自校验清单</small></div>
+        </div>
+
+        <div class="overview-grid">
+          <section class="panel capture-panel">
+            <div class="panel-head">
+              <div><span class="eyebrow">CATALOG</span><h2>最近 Capture</h2></div>
+              <button class="quiet-button" data-go="captures" type="button">查看全部</button>
+            </div>
+            <div class="table-wrap compact"><table><thead><tr><th>Capture</th><th>设备</th><th>帧</th><th>EGO</th><th>状态</th></tr></thead><tbody id="recentRows"></tbody></table></div>
+          </section>
+          <aside class="panel run-monitor">
+            <div class="panel-head"><div><span class="eyebrow">ACTIVE RUN</span><h2>当前处理</h2></div><span class="mode-label">LOCAL</span></div>
+            <div id="activeRun"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-captures">
+        <div class="page-head">
+          <div><span class="eyebrow">CATALOG</span><h1>Capture 目录</h1></div>
+          <button class="button primary" id="openRunButton" type="button" disabled>启动处理</button>
+        </div>
+        <div class="filters">
+          <label class="search-field"><span>检索</span><input id="captureSearch" type="search" placeholder="Capture ID 或设备"></label>
+          <label><span>状态</span><select id="statusFilter"><option value="">全部状态</option><option value="pending">待处理</option><option value="processing">处理中</option><option value="completed">完成</option><option value="failed">失败</option></select></label>
+          <span class="result-count" id="captureCount">0 条</span>
+        </div>
+        <div class="catalog-grid">
+          <section class="panel table-panel">
+            <div class="table-wrap"><table class="capture-table"><thead><tr><th>数据名称 / ID</th><th>采集时间</th><th>设备</th><th>规格</th><th>派生数据</th><th>状态</th></tr></thead><tbody id="captureRows"></tbody></table></div>
+          </section>
+          <aside class="panel inspector" id="captureInspector"><div class="empty-state"><strong>选择 Capture</strong><span>查看阶段、质量与数据血缘</span></div></aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-runs">
+        <div class="page-head"><div><span class="eyebrow">PIPELINE</span><h1>处理作业</h1></div><span class="head-note">运行记录持久化保存</span></div>
+        <div class="notice success"><strong>LOCAL EXECUTOR</strong><span>作业串行执行现有 LeRobot 工具链；Source 保持只读，产物按 Capture 契约写入。</span></div>
+        <section class="panel">
+          <div class="table-wrap"><table class="run-table"><thead><tr><th>运行 ID</th><th>Capture</th><th>Pipeline</th><th>当前阶段</th><th>进度</th><th>开始时间</th><th>状态</th><th></th></tr></thead><tbody id="runRows"></tbody></table></div>
+        </section>
+        <section class="panel run-detail-panel" id="runDetails"><div class="empty-state"><strong>选择处理作业</strong><span>查看阶段、产物和完整日志</span></div></section>
+      </section>
+
+      <section class="view" id="view-quality">
+        <div class="page-head"><div><span class="eyebrow">QUALITY ASSURANCE</span><h1>质量中心</h1></div><span class="head-note">未执行的检测保持“未评估”</span></div>
+        <div class="quality-layout">
+          <section class="panel">
+            <div class="panel-head"><div><span class="eyebrow">CAPTURES</span><h2>质量队列</h2></div></div>
+            <div class="table-wrap"><table><thead><tr><th>数据名称 / ID</th><th>彩色</th><th>深度</th><th>同步</th><th>完整性</th><th>EGO</th></tr></thead><tbody id="qualityRows"></tbody></table></div>
+          </section>
+          <aside class="panel quality-inspector" id="qualityInspector"><div class="empty-state"><strong>选择 Capture</strong><span>查看指标、门槛、证据文件和判定依据</span></div></aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-exports">
+        <div class="page-head"><div><span class="eyebrow">ARTIFACTS</span><h1>数据导出</h1></div><span class="head-note">同盘硬链接优先，跨盘复制</span></div>
+        <section class="panel">
+          <div class="table-wrap"><table><thead><tr><th>Capture</th><th>EGO 数据集</th><th>机器人数据集</th><th>索引容量</th><th>版本状态</th></tr></thead><tbody id="exportRows"></tbody></table></div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="runDialog">
+    <form method="dialog" id="runForm">
+      <div class="dialog-head"><div><span class="eyebrow">NEW RUN</span><h2>启动处理作业</h2></div><button class="close-button" value="cancel" aria-label="关闭" title="关闭" type="submit">×</button></div>
+      <div class="dialog-capture"><span>Capture</span><strong id="runCaptureId">--</strong></div>
+      <label class="dialog-field" for="pipelineSelect"><span>处理流程</span><select id="pipelineSelect"><option value="integrity">仅完整性检查</option><option value="ego">构建 EGO + 质量</option><option value="retarget">机器人重定向 + 质量</option><option value="quality">仅质量检查</option><option value="export">仅导出</option><option value="full">完整处理链</option></select></label>
+      <label class="dialog-field" for="robotTarget"><span>目标机器人</span><select id="robotTarget"><option value="nero_inspire_rgbd">NERO + Inspire · RGB-D</option><option value="nero_inspire_rgb">NERO + Inspire · RGB</option><option value="nero_inspire_rgbd_anchored">NERO + Inspire · RGB-D Anchored</option><option value="nero_gripper_rgbd">NERO + Gripper · RGB-D</option><option value="nero_gripper_rgb">NERO + Gripper · RGB</option></select></label>
+      <div class="dialog-columns"><label class="dialog-field" for="targetRevision"><span>Target revision</span><input id="targetRevision" value="target_revision_v001" pattern="[A-Za-z0-9_.-]+"></label><label class="dialog-field" for="retargetRevision"><span>Retarget revision</span><input id="retargetRevision" placeholder="自动生成"></label></div>
+      <div class="pipeline-preview" id="pipelinePreview"></div>
+      <div class="capability-note" id="capabilityNote"></div>
+      <div class="dialog-actions"><button class="button" value="cancel" type="submit">取消</button><button class="button primary" id="startRunButton" value="default" type="submit">开始运行</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="metadataDialog">
+    <form method="dialog" id="metadataForm">
+      <div class="dialog-head"><div><span class="eyebrow">CATALOG IDENTITY</span><h2>编辑数据标识</h2></div><button class="close-button" value="cancel" aria-label="关闭" title="关闭" type="submit">×</button></div>
+      <label class="dialog-field" for="semanticId"><span>语义 ID</span><input id="semanticId" required minlength="3" maxlength="64" pattern="[a-z0-9][a-z0-9._-]*"></label>
+      <label class="dialog-field" for="displayName"><span>显示名称</span><input id="displayName" required maxlength="120"></label>
+      <label class="dialog-field" for="taskDescription"><span>任务描述</span><textarea id="taskDescription" maxlength="500"></textarea></label>
+      <label class="dialog-field" for="operatorName"><span>操作者</span><input id="operatorName" maxlength="80"></label>
+      <div class="dialog-actions"><button class="button" value="cancel" type="submit">取消</button><button class="button primary" id="saveMetadataButton" value="default" type="submit">保存</button></div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/assets/app.js"></script>
+</body>
+</html>
